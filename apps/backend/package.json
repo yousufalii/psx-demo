@@ -1,5 +1,5 @@
 {
-  "name": "backend",
+  "name": "@psx/backend",
   "version": "0.0.1",
   "description": "PSX Portfolio Management API",
   "type": "module",
@@ -9,6 +9,7 @@
   "scripts": {
     "build": "prisma generate && nest build",
     "db:generate": "prisma generate",
+    "db:create": "node scripts/create-dev-db.cjs",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",

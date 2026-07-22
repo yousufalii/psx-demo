@@ -1,8 +1,9 @@
-.env
 .git
-.gitignore
-deploy/
+**/.env
+**/.next/
+**/coverage/
+**/dist/
 node_modules/
-market_data.json
-npm-debug.log*
-psx-scraper-deploy.zip
+**/market_data.json
+*.log
+**/*.zip

@@ -17,7 +17,9 @@ services:
       retries: 12
 
   scraper:
-    build: .
+    build:
+      context: ../..
+      dockerfile: apps/scraper/Dockerfile
     environment:
       PGHOST: db
       PGPORT: 5432

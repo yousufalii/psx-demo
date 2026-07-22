@@ -6,7 +6,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/opt/psx-scraper
+WorkingDirectory=/opt/psx-portfolio/apps/scraper
 ExecStartPre=/usr/bin/docker compose --env-file /etc/psx-scraper.env up -d db
 ExecStart=/usr/bin/docker compose --env-file /etc/psx-scraper.env run --rm scraper
 TimeoutStartSec=180

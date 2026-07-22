@@ -1,9 +1,27 @@
-.env
+# Dependencies
 node_modules/
-market_data.json
-psx-scraper-deploy.zip
-backend/src/generated/prisma/
-backend/dist/
-backend/coverage/
-frontend/.next/
-frontend/out/
+
+# Local environment and secrets (examples remain tracked)
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+
+# Build and test output
+apps/backend/dist/
+apps/backend/coverage/
+apps/backend/src/generated/prisma/
+apps/frontend/.next/
+apps/frontend/out/
+*.tsbuildinfo
+
+# Scraper output and deployment bundles
+apps/scraper/market_data.json
+apps/scraper/*.zip
+
+# Logs and editor/OS files
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

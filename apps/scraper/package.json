@@ -1,0 +1,16 @@
+{
+  "name": "@psx/scraper",
+  "version": "0.1.0",
+  "description": "Scheduled PSX market-data scraper",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --check index.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "dotenv": "^17.4.2",
+    "pg": "^8.22.0"
+  }
+}

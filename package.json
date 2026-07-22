@@ -1,34 +1,29 @@
 {
-  "name": "psx-portfolio",
+  "name": "@psx/root",
   "version": "1.0.0",
   "description": "PSX portfolio management platform",
   "private": true,
   "workspaces": [
-    "backend",
-    "frontend"
+    "apps/*"
   ],
-  "main": "index.js",
   "scripts": {
-    "scraper:start": "node index.js",
-    "dev:backend": "npm run start:dev --workspace backend",
-    "dev:frontend": "npm run dev --workspace frontend",
-    "db:create": "node scripts/create-dev-db.js",
-    "db:migrate": "npm run db:migrate --workspace backend",
+    "dev:backend": "npm run start:dev --workspace @psx/backend",
+    "dev:frontend": "npm run dev --workspace @psx/frontend",
+    "scraper:start": "npm run start --workspace @psx/scraper",
+    "db:create": "npm run db:create --workspace @psx/backend",
+    "db:migrate": "npm run db:migrate --workspace @psx/backend",
+    "db:generate": "npm run db:generate --workspace @psx/backend",
+    "db:studio": "npm run db:studio --workspace @psx/backend",
     "build": "npm run build --workspaces --if-present",
-    "test": "node --check index.js && npm run test --workspace backend -- --runInBand",
-    "lint": "npm run lint --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run test:e2e --workspace @psx/backend",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "npm run format --workspaces --if-present"
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "cheerio": "^1.2.0",
-    "dotenv": "^17.4.2",
-    "pg": "^8.22.0",
-    "sharp": "^0.35.3"
-  },
   "overrides": {
-    "next": {
-      "sharp": "0.35.3"
-    }
+    "postcss": "8.5.10",
+    "sharp": "0.35.3"
   }
 }

@@ -26,7 +26,9 @@ Do not add inbound rules for PostgreSQL port 5432.
 
 ## 3. Upload and install
 
-From PowerShell in the project directory, replace the key path and EC2 IP:
+Deployment is currently paused. When it resumes, create the deployment archive
+from the monorepo root so that the root workspace files and `apps/` structure
+are preserved. Then replace the key path and EC2 IP below:
 
 ```powershell
 scp -i "C:\path\psx-key.pem" .\psx-scraper-deploy.zip ubuntu@EC2_PUBLIC_IP:/home/ubuntu/
@@ -38,9 +40,9 @@ On EC2, run:
 ```bash
 sudo apt-get update
 sudo apt-get install -y unzip
-unzip psx-scraper-deploy.zip -d psx-scraper
-cd psx-scraper
-sudo bash deploy/install.sh
+unzip psx-scraper-deploy.zip -d psx-portfolio
+cd psx-portfolio
+sudo bash apps/scraper/deploy/install.sh
 ```
 
 The installer performs an immediate test scrape and enables the schedule.

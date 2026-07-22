@@ -1,24 +1,26 @@
-# PSX Portfolio Management App
+# PSX Portfolio
 
-Monorepo foundation for a PSX portfolio tracker with a Next.js frontend, NestJS
-API, PostgreSQL, and Prisma.
+PSX portfolio management monorepo with a Next.js web app, NestJS API,
+PostgreSQL/Prisma, and a scheduled market-data scraper.
 
-## Project structure
+## Monorepo layout
 
 ```text
-backend/     NestJS REST API and Prisma schema
-frontend/    Next.js App Router web application
-docs/        Product and functional specifications
-scripts/     Local development helpers
-index.js     Existing standalone PSX scraper (preserved during migration)
+apps/
+  backend/    NestJS REST API and Prisma schema
+  frontend/   Next.js App Router web application
+  scraper/    PSX scraper and its Docker/AWS deployment files
+docs/         Product and functional specifications
 ```
 
-## Local prerequisites
+The repository uses npm workspaces. Dependencies are installed once at the
+root, and `package-lock.json` is the only lockfile.
+
+## Requirements
 
 - Node.js 22+
+- npm 10+
 - PostgreSQL on `localhost:5432`
-- Local PostgreSQL user/password: `postgres` / `postgres`, or update the local
-  environment files for your setup
 
 ## First-time setup
 
@@ -28,54 +30,47 @@ npm run db:create
 npm run db:migrate -- --name init
 ```
 
-## Run locally
+Copy each app's `.env.example` to `.env` and adjust local credentials where
+needed. The default development database is `psx_portfolio`.
 
-Open two terminals:
+## Development
+
+Run the API and frontend in separate terminals:
 
 ```powershell
 npm run dev:backend
-```
-
-```powershell
 npm run dev:frontend
 ```
 
 - Frontend: `http://localhost:3000`
 - API health: `http://localhost:4000/api/v1/health`
 - Swagger UI: `http://localhost:4000/api/docs`
-- Swagger JSON: `http://localhost:4000/api/docs-json`
 
-## Authentication routes
+Run the scraper manually with:
 
-- Frontend registration: `http://localhost:3000/register`
-- Frontend login: `http://localhost:3000/login`
-- Authenticated dashboard: `http://localhost:3000/dashboard`
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/logout`
-- `GET /api/v1/auth/me`
+```powershell
+npm run scraper:start
+```
 
-Authentication uses an opaque, random session token in an HTTP-only cookie. Only
-the SHA-256 token hash is stored in PostgreSQL. Passwords are hashed with
-Argon2id. State-changing API requests require the `X-Requested-With` CSRF header,
-which the frontend API client adds automatically.
-
-## Quality commands
+## Quality checks
 
 ```powershell
 npm run lint
 npm test
+npm run test:e2e
 npm run build
 ```
 
 ## Database commands
 
 ```powershell
+npm run db:generate
 npm run db:migrate -- --name migration_name
-npm run db:studio --workspace backend
-npm run db:generate --workspace backend
+npm run db:studio
 ```
 
-The application uses the local `psx_portfolio` database. The pre-existing `psx`
-database remains available to the standalone scraper until its ingestion logic is
-moved into the backend market-data module.
+App-specific commands can also be run with a scoped workspace, for example:
+
+```powershell
+npm run test --workspace @psx/backend
+```
