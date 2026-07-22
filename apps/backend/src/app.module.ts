@@ -10,6 +10,7 @@ import { CsrfGuard } from './auth/guards/csrf.guard.js';
 import { SessionAuthGuard } from './auth/guards/session-auth.guard.js';
 import { validateEnvironment } from './config/validate-env.js';
 import { PrismaModule } from './database/prisma.module.js';
+import { PortfoliosModule } from './portfolios/portfolios.module.js';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PrismaModule } from './database/prisma.module.js';
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
+    PortfoliosModule,
   ],
   controllers: [AppController],
   providers: [

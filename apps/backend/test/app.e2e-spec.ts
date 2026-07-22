@@ -13,6 +13,12 @@ describe('Application API (e2e)', () => {
   let agent: Agent;
   let prisma: PrismaService;
   const testEmail = `auth-e2e-${Date.now()}@example.com`;
+  const portfolioEmail = `portfolio-e2e-${Date.now()}@example.com`;
+  const otherEmail = `portfolio-other-e2e-${Date.now()}@example.com`;
+  const authHeaders = {
+    Origin: 'http://localhost:3000',
+    'X-Requested-With': 'XMLHttpRequest',
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -42,11 +48,6 @@ describe('Application API (e2e)', () => {
   });
 
   it('registers, authenticates, and revokes an opaque session', async () => {
-    const authHeaders = {
-      Origin: 'http://localhost:3000',
-      'X-Requested-With': 'XMLHttpRequest',
-    };
-
     await agent
       .post('/api/v1/auth/register')
       .set(authHeaders)
@@ -96,8 +97,118 @@ describe('Application API (e2e)', () => {
     await agent.post('/api/v1/auth/logout').set(authHeaders).expect(204);
   });
 
+  it('manages portfolios while enforcing ownership and archive rules', async () => {
+    const owner = request.agent(app.getHttpServer() as Server);
+    const otherUser = request.agent(app.getHttpServer() as Server);
+
+    await owner
+      .post('/api/v1/auth/register')
+      .set(authHeaders)
+      .send({
+        name: 'Portfolio Owner',
+        email: portfolioEmail,
+        password: 'A-secure-passphrase-123',
+      })
+      .expect(201);
+    await otherUser
+      .post('/api/v1/auth/register')
+      .set(authHeaders)
+      .send({
+        name: 'Other Investor',
+        email: otherEmail,
+        password: 'A-secure-passphrase-123',
+      })
+      .expect(201);
+
+    const createResponse = await owner
+      .post('/api/v1/portfolios')
+      .set(authHeaders)
+      .send({ name: 'Core Holdings' })
+      .expect(201);
+    const portfolioId = (createResponse.body as { portfolio: { id: string } })
+      .portfolio.id;
+
+    await owner
+      .post('/api/v1/portfolios')
+      .set(authHeaders)
+      .send({ name: 'core holdings' })
+      .expect(409);
+
+    await owner
+      .get('/api/v1/portfolios')
+      .expect(200)
+      .expect(({ body }) => {
+        const responseBody = body as { portfolios: Array<{ id: string }> };
+        expect(responseBody.portfolios).toHaveLength(1);
+        expect(responseBody.portfolios[0]?.id).toBe(portfolioId);
+      });
+
+    await otherUser.get(`/api/v1/portfolios/${portfolioId}`).expect(404);
+
+    await owner
+      .patch(`/api/v1/portfolios/${portfolioId}`)
+      .set(authHeaders)
+      .send({ name: 'Growth Portfolio', allowNegativeCash: true })
+      .expect(200)
+      .expect(({ body }) => {
+        const responseBody = body as {
+          portfolio: { name: string; allowNegativeCash: boolean };
+        };
+        expect(responseBody.portfolio).toMatchObject({
+          name: 'Growth Portfolio',
+          allowNegativeCash: true,
+        });
+      });
+
+    await owner
+      .post(`/api/v1/portfolios/${portfolioId}/archive`)
+      .set(authHeaders)
+      .expect(200);
+    await owner
+      .get('/api/v1/portfolios')
+      .expect(200)
+      .expect(({ body }) => {
+        expect((body as { portfolios: unknown[] }).portfolios).toHaveLength(0);
+      });
+    await owner
+      .get('/api/v1/portfolios?includeArchived=true')
+      .expect(200)
+      .expect(({ body }) => {
+        const responseBody = body as {
+          portfolios: Array<{ id: string; archivedAt: string | null }>;
+        };
+        expect(responseBody.portfolios).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ id: portfolioId }),
+          ]),
+        );
+        expect(responseBody.portfolios[0]?.archivedAt).not.toBeNull();
+      });
+
+    await owner
+      .post('/api/v1/portfolios')
+      .set(authHeaders)
+      .send({ name: 'Growth Portfolio' })
+      .expect(201);
+    await owner
+      .post(`/api/v1/portfolios/${portfolioId}/restore`)
+      .set(authHeaders)
+      .expect(409);
+    await owner
+      .patch(`/api/v1/portfolios/${portfolioId}`)
+      .set(authHeaders)
+      .send({ name: 'Archived Strategy' })
+      .expect(200);
+    await owner
+      .post(`/api/v1/portfolios/${portfolioId}/restore`)
+      .set(authHeaders)
+      .expect(200);
+  });
+
   afterAll(async () => {
-    await prisma.user.deleteMany({ where: { email: testEmail } });
+    await prisma.user.deleteMany({
+      where: { email: { in: [testEmail, portfolioEmail, otherEmail] } },
+    });
     await app.close();
   });
 });

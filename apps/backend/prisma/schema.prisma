@@ -93,7 +93,6 @@ model Portfolio {
   transactions      Transaction[]
   dailySnapshots    PortfolioDailySnapshot[]
 
-  @@unique([userId, name])
   @@index([userId, archivedAt])
   @@map("portfolios")
 }

@@ -1,83 +1,66 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { ApiError, apiFetch } from "@/lib/api";
-import type { AuthResponse } from "@/features/auth/auth-types";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, BriefcaseBusiness } from "lucide-react";
+import Link from "next/link";
+import type { PortfoliosResponse } from "@/features/portfolios/portfolio-types";
+import { WorkspaceShell } from "@/features/workspace/workspace-shell";
+import { apiFetch } from "@/lib/api";
 
 export function DashboardClient() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const userQuery = useQuery({
-    queryKey: ["auth", "me"],
-    queryFn: () => apiFetch<AuthResponse>("/auth/me"),
-    retry: false,
+  const portfoliosQuery = useQuery({
+    queryKey: ["portfolios", { includeArchived: false }],
+    queryFn: () => apiFetch<PortfoliosResponse>("/portfolios"),
   });
-  const logout = useMutation({
-    mutationFn: () => apiFetch<void>("/auth/logout", { method: "POST" }),
-    onSuccess: () => {
-      queryClient.clear();
-      router.replace("/login");
-      router.refresh();
-    },
-  });
-
-  useEffect(() => {
-    if (userQuery.error instanceof ApiError && userQuery.error.status === 401) {
-      router.replace("/login");
-    }
-  }, [router, userQuery.error]);
-
-  if (userQuery.isPending) {
-    return <main className="grid min-h-screen place-items-center bg-slate-100 text-sm font-semibold text-slate-500">Loading your workspace…</main>;
-  }
-
-  if (userQuery.isError || !userQuery.data) {
-    return <main className="grid min-h-screen place-items-center bg-slate-100 px-6 text-center text-sm text-slate-600">Unable to load your session.</main>;
-  }
-
-  const { user } = userQuery.data;
 
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-950">
-      <header className="border-b border-slate-900/8 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-emerald-950 text-sm font-black text-white">PX</span>
-            <div>
-              <p className="font-bold">PSX Portfolio</p>
-              <p className="text-xs text-slate-500">Investor workspace</p>
+    <WorkspaceShell>
+      {(user) => {
+        const portfolios = portfoliosQuery.data?.portfolios ?? [];
+        return (
+          <section className="mx-auto max-w-7xl px-6 py-12 lg:px-10">
+            <p className="text-sm font-semibold text-emerald-700">Authenticated workspace</p>
+            <h1 className="mt-2 text-4xl font-black tracking-[-0.035em]">Welcome, {user.name}</h1>
+            <p className="mt-3 text-slate-600">
+              {portfolios.length
+                ? `${portfolios.length} active ${portfolios.length === 1 ? "portfolio is" : "portfolios are"} ready for transactions.`
+                : "Create your first portfolio to start tracking cash and PSX transactions."}
+            </p>
+
+            <div className="mt-10 grid gap-5 md:grid-cols-3">
+              {["Portfolio value", "Cash balance", "Total P&L"].map((label) => (
+                <article key={label} className="rounded-2xl border border-slate-900/8 bg-white p-6 shadow-sm">
+                  <p className="text-sm font-semibold text-slate-500">{label}</p>
+                  <p className="mt-3 text-2xl font-black">PKR 0.00</p>
+                  <p className="mt-2 text-xs text-slate-400">
+                    {portfolios.length ? "Transactions module coming next" : "Create a portfolio to begin"}
+                  </p>
+                </article>
+              ))}
             </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => logout.mutate()}
-            disabled={logout.isPending}
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-900/10 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-          >
-            <LogOut className="size-4" aria-hidden="true" />
-            Sign out
-          </button>
-        </div>
-      </header>
 
-      <section className="mx-auto max-w-7xl px-6 py-12 lg:px-10">
-        <p className="text-sm font-semibold text-emerald-700">Authenticated workspace</p>
-        <h1 className="mt-2 text-4xl font-black tracking-[-0.035em]">Welcome, {user.name}</h1>
-        <p className="mt-3 text-slate-600">Your account foundation is ready. Portfolio creation is the next module.</p>
-
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {["Portfolio value", "Cash balance", "Total P&L"].map((label) => (
-            <article key={label} className="rounded-2xl border border-slate-900/8 bg-white p-6 shadow-sm">
-              <p className="text-sm font-semibold text-slate-500">{label}</p>
-              <p className="mt-3 text-2xl font-black">PKR 0.00</p>
-              <p className="mt-2 text-xs text-slate-400">Create a portfolio to begin</p>
-            </article>
-          ))}
-        </div>
-      </section>
-    </main>
+            <div className="mt-8 rounded-2xl border border-emerald-900/10 bg-emerald-950 p-6 text-white shadow-lg shadow-emerald-950/10">
+              <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                <div className="flex items-start gap-4">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/10 text-emerald-200">
+                    <BriefcaseBusiness className="size-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h2 className="font-bold">{portfolios.length ? "Manage portfolios" : "Create your first portfolio"}</h2>
+                    <p className="mt-1 text-sm text-slate-300">Separate strategies, archive old portfolios, and control cash policy.</p>
+                  </div>
+                </div>
+                <Link
+                  href="/portfolios"
+                  className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-emerald-950"
+                >
+                  Open portfolios <ArrowRight className="size-4" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+          </section>
+        );
+      }}
+    </WorkspaceShell>
   );
 }
