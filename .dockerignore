@@ -1,0 +1,8 @@
+.env
+.git
+.gitignore
+deploy/
+node_modules/
+market_data.json
+npm-debug.log*
+psx-scraper-deploy.zip

@@ -1,0 +1,15 @@
+[Unit]
+Description=PSX market data scraper
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/psx-scraper
+ExecStartPre=/usr/bin/docker compose --env-file /etc/psx-scraper.env up -d db
+ExecStart=/usr/bin/docker compose --env-file /etc/psx-scraper.env run --rm scraper
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target

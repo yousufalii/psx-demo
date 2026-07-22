@@ -1,0 +1,10 @@
+[Unit]
+Description=Run PSX scraper Monday-Friday at 6 PM Pakistan time
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 18:00:00 Asia/Karachi
+Persistent=true
+Unit=psx-scraper.service
+
+[Install]
+WantedBy=timers.target

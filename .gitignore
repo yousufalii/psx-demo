@@ -1,0 +1,9 @@
+.env
+node_modules/
+market_data.json
+psx-scraper-deploy.zip
+backend/src/generated/prisma/
+backend/dist/
+backend/coverage/
+frontend/.next/
+frontend/out/

@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum TransactionType {
+  BUY
+  SELL
+  DIVIDEND
+  CASH_DEPOSIT
+  CASH_WITHDRAWAL
+  FEE
+}
+
+enum ImportStatus {
+  PREVIEWED
+  CONFIRMED
+  FAILED
+}
+
+enum IngestionStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum IngestionTrigger {
+  SCHEDULED
+  MANUAL
+}
+
+model User {
+  id              String         @id @default(uuid()) @db.Uuid
+  name            String
+  email           String         @unique
+  passwordHash    String         @map("password_hash")
+  role            UserRole       @default(USER)
+  status          UserStatus     @default(ACTIVE)
+  emailVerifiedAt DateTime?      @map("email_verified_at") @db.Timestamptz(3)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  portfolios      Portfolio[]
+  watchlistItems  WatchlistItem[]
+  importBatches   ImportBatch[]
+  auditLogs       AuditLog[]     @relation("AuditActor")
+  ingestionRuns   IngestionRun[] @relation("IngestionActor")
+
+  @@map("users")
+}
+
+model Portfolio {
+  id                String                   @id @default(uuid()) @db.Uuid
+  userId            String                   @map("user_id") @db.Uuid
+  name              String
+  baseCurrency      String                   @default("PKR") @map("base_currency") @db.VarChar(3)
+  allowNegativeCash Boolean                  @default(false) @map("allow_negative_cash")
+  archivedAt        DateTime?                @map("archived_at") @db.Timestamptz(3)
+  createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user              User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions      Transaction[]
+  dailySnapshots    PortfolioDailySnapshot[]
+
+  @@unique([userId, name])
+  @@index([userId, archivedAt])
+  @@map("portfolios")
+}
+
+model Stock {
+  id             String          @id @default(uuid()) @db.Uuid
+  symbol         String          @unique
+  companyName    String          @map("company_name")
+  sector         String
+  listedIn       String          @default("") @map("listed_in")
+  isActive       Boolean         @default(true) @map("is_active")
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  marketPrices   MarketPrice[]
+  transactions   Transaction[]
+  watchlistItems WatchlistItem[]
+
+  @@index([companyName])
+  @@index([sector])
+  @@map("stocks")
+}
+
+model MarketPrice {
+  id            BigInt   @id @default(autoincrement())
+  stockId       String   @map("stock_id") @db.Uuid
+  marketDate    DateTime @map("market_date") @db.Date
+  ldcp          Decimal? @db.Decimal(20, 4)
+  openPrice     Decimal? @map("open_price") @db.Decimal(20, 4)
+  highPrice     Decimal? @map("high_price") @db.Decimal(20, 4)
+  lowPrice      Decimal? @map("low_price") @db.Decimal(20, 4)
+  closePrice    Decimal? @map("close_price") @db.Decimal(20, 4)
+  netChange     Decimal? @map("net_change") @db.Decimal(20, 4)
+  percentChange Decimal? @map("percent_change") @db.Decimal(12, 4)
+  volume        BigInt?
+  scrapedAt     DateTime @map("scraped_at") @db.Timestamptz(3)
+  stock         Stock    @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@unique([stockId, marketDate])
+  @@index([marketDate])
+  @@map("market_prices")
+}
+
+model Transaction {
+  id              String          @id @default(uuid()) @db.Uuid
+  portfolioId     String          @map("portfolio_id") @db.Uuid
+  stockId         String?         @map("stock_id") @db.Uuid
+  type            TransactionType
+  effectiveDate   DateTime        @map("effective_date") @db.Date
+  quantity        Decimal?        @db.Decimal(20, 6)
+  price           Decimal?        @db.Decimal(20, 4)
+  commission      Decimal         @default(0) @db.Decimal(20, 4)
+  tax             Decimal         @default(0) @db.Decimal(20, 4)
+  netAmount       Decimal         @map("net_amount") @db.Decimal(20, 4)
+  brokerReference String?         @map("broker_reference")
+  notes           String?
+  importBatchId   String?         @map("import_batch_id") @db.Uuid
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+  portfolio       Portfolio       @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  stock           Stock?          @relation(fields: [stockId], references: [id], onDelete: Restrict)
+  importBatch     ImportBatch?    @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  @@index([portfolioId, effectiveDate])
+  @@index([stockId, effectiveDate])
+  @@map("transactions")
+}
+
+model PortfolioDailySnapshot {
+  id            BigInt    @id @default(autoincrement())
+  portfolioId   String    @map("portfolio_id") @db.Uuid
+  snapshotDate  DateTime  @map("snapshot_date") @db.Date
+  cashBalance   Decimal   @map("cash_balance") @db.Decimal(20, 4)
+  costBasis     Decimal   @map("cost_basis") @db.Decimal(20, 4)
+  marketValue   Decimal   @map("market_value") @db.Decimal(20, 4)
+  realizedPnl   Decimal   @map("realized_pnl") @db.Decimal(20, 4)
+  unrealizedPnl Decimal   @map("unrealized_pnl") @db.Decimal(20, 4)
+  income        Decimal   @db.Decimal(20, 4)
+  portfolio     Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, snapshotDate])
+  @@map("portfolio_daily_snapshots")
+}
+
+model WatchlistItem {
+  userId    String   @map("user_id") @db.Uuid
+  stockId   String   @map("stock_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stock     Stock    @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@id([userId, stockId])
+  @@map("watchlist_items")
+}
+
+model ImportBatch {
+  id            String       @id @default(uuid()) @db.Uuid
+  userId        String       @map("user_id") @db.Uuid
+  fileHash      String       @map("file_hash")
+  status        ImportStatus
+  totalRows     Int          @default(0) @map("total_rows")
+  acceptedRows  Int          @default(0) @map("accepted_rows")
+  rejectedRows  Int          @default(0) @map("rejected_rows")
+  errorSummary  Json?        @map("error_summary")
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  confirmedAt   DateTime?    @map("confirmed_at") @db.Timestamptz(3)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+
+  @@unique([userId, fileHash])
+  @@map("import_batches")
+}
+
+model IngestionRun {
+  id              String           @id @default(uuid()) @db.Uuid
+  status          IngestionStatus
+  trigger         IngestionTrigger
+  triggeredById   String?          @map("triggered_by_id") @db.Uuid
+  startedAt       DateTime         @default(now()) @map("started_at") @db.Timestamptz(3)
+  finishedAt      DateTime?        @map("finished_at") @db.Timestamptz(3)
+  totalRows       Int              @default(0) @map("total_rows")
+  acceptedRows    Int              @default(0) @map("accepted_rows")
+  rejectedRows    Int              @default(0) @map("rejected_rows")
+  errorSummary    Json?            @map("error_summary")
+  triggeredBy     User?            @relation("IngestionActor", fields: [triggeredById], references: [id], onDelete: SetNull)
+
+  @@index([startedAt])
+  @@map("ingestion_runs")
+}
+
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  requestId  String?  @map("request_id")
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
