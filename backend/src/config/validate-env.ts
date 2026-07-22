@@ -17,6 +17,15 @@ export function validateEnvironment(config: Environment): Environment {
     throw new Error('DATABASE_URL must be a PostgreSQL connection URL');
   }
 
+  const sessionTtlDays = Number(config.SESSION_TTL_DAYS ?? 7);
+  if (
+    !Number.isInteger(sessionTtlDays) ||
+    sessionTtlDays < 1 ||
+    sessionTtlDays > 30
+  ) {
+    throw new Error('SESSION_TTL_DAYS must be an integer from 1 to 30');
+  }
+
   return {
     ...config,
     NODE_ENV: readString(config.NODE_ENV, 'NODE_ENV', 'development'),
@@ -27,5 +36,6 @@ export function validateEnvironment(config: Environment): Environment {
       'http://localhost:3000',
     ),
     DATABASE_URL: databaseUrl,
+    SESSION_TTL_DAYS: sessionTtlDays,
   };
 }
