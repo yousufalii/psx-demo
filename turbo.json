@@ -1,0 +1,29 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        "src/generated/prisma/**"
+      ]
+    },
+    "lint": {},
+    "lint:fix": {
+      "cache": false
+    },
+    "test": {},
+    "test:e2e": {
+      "cache": false
+    },
+    "format": {
+      "cache": false
+    }
+  }
+}

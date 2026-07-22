@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "PSX portfolio management platform",
   "private": true,
+  "packageManager": "npm@10.9.3",
   "workspaces": [
     "apps/*"
   ],
   "scripts": {
+    "dev": "turbo run dev --filter=@psx/backend --filter=@psx/frontend --ui=stream --log-prefix=task",
+    "dev:tui": "turbo run dev --filter=@psx/backend --filter=@psx/frontend --ui=tui",
     "dev:backend": "npm run start:dev --workspace @psx/backend",
     "dev:frontend": "npm run dev --workspace @psx/frontend",
     "scraper:start": "npm run start --workspace @psx/scraper",
@@ -14,16 +17,23 @@
     "db:migrate": "npm run db:migrate --workspace @psx/backend",
     "db:generate": "npm run db:generate --workspace @psx/backend",
     "db:studio": "npm run db:studio --workspace @psx/backend",
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "test:e2e": "npm run test:e2e --workspace @psx/backend",
-    "lint": "npm run lint --workspaces --if-present",
-    "format": "npm run format --workspaces --if-present"
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e --filter=@psx/backend",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "format": "turbo run format"
   },
   "author": "",
   "license": "ISC",
+  "devDependencies": {
+    "turbo": "^2.10.6"
+  },
   "overrides": {
     "postcss": "8.5.10",
     "sharp": "0.35.3"
+  },
+  "devDependencies": {
+    "turbo": "^2.10.6"
   }
 }

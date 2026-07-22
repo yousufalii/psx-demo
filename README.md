@@ -35,12 +35,21 @@ needed. The default development database is `psx_portfolio`.
 
 ## Development
 
-Run the API and frontend in separate terminals:
+Run the frontend and API together in one terminal with prefixed, live logs:
 
 ```powershell
-npm run dev:backend
-npm run dev:frontend
+npm run dev
 ```
+
+For Turbo's interactive terminal UI, where each app's logs can be selected
+separately, use:
+
+```powershell
+npm run dev:tui
+```
+
+Press `Ctrl+C` once to stop all development servers. To run only one app, use
+`npm run dev:backend` or `npm run dev:frontend`.
 
 - Frontend: `http://localhost:3000`
 - API health: `http://localhost:4000/api/v1/health`

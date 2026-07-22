@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+.turbo/
 
 # Local environment and secrets (examples remain tracked)
 **/.env
