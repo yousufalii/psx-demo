@@ -45,6 +45,21 @@ npm run dev:frontend
 - Swagger UI: `http://localhost:4000/api/docs`
 - Swagger JSON: `http://localhost:4000/api/docs-json`
 
+## Authentication routes
+
+- Frontend registration: `http://localhost:3000/register`
+- Frontend login: `http://localhost:3000/login`
+- Authenticated dashboard: `http://localhost:3000/dashboard`
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+- `POST /api/v1/auth/logout`
+- `GET /api/v1/auth/me`
+
+Authentication uses an opaque, random session token in an HTTP-only cookie. Only
+the SHA-256 token hash is stored in PostgreSQL. Passwords are hashed with
+Argon2id. State-changing API requests require the `X-Requested-With` CSRF header,
+which the frontend API client adds automatically.
+
 ## Quality commands
 
 ```powershell

@@ -82,6 +82,18 @@ describe('Application API (e2e)', () => {
     await agent.post('/api/v1/auth/logout').set(authHeaders).expect(204);
 
     await agent.get('/api/v1/auth/me').expect(401);
+
+    await agent
+      .post('/api/v1/auth/login')
+      .set(authHeaders)
+      .send({
+        email: testEmail,
+        password: 'A-secure-passphrase-123',
+      })
+      .expect(200);
+
+    await agent.get('/api/v1/auth/me').expect(200);
+    await agent.post('/api/v1/auth/logout').set(authHeaders).expect(204);
   });
 
   afterAll(async () => {

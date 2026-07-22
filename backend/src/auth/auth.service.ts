@@ -10,6 +10,9 @@ import type { LoginDto } from './dto/login.dto.js';
 import type { RegisterDto } from './dto/register.dto.js';
 import { SessionService, type IssuedSession } from './session.service.js';
 
+const DUMMY_PASSWORD_HASH =
+  '$argon2id$v=19$m=19456,p=1,t=2$uz4aLkqYhIJpEoq11iM+eQ$dcBW3AcQtpteHUDtGUSYlvmRaD6kXLVgy4a1L7zdHwM';
+
 export interface AuthenticationResult {
   user: AuthenticatedUser;
   session: IssuedSession;
@@ -66,9 +69,10 @@ export class AuthService {
       where: { email: dto.email },
     });
 
-    const passwordMatches = user
-      ? await verify(user.passwordHash, dto.password).catch(() => false)
-      : false;
+    const passwordMatches = await verify(
+      user?.passwordHash ?? DUMMY_PASSWORD_HASH,
+      dto.password,
+    ).catch(() => false);
 
     if (!user || !passwordMatches || user.status !== 'ACTIVE') {
       throw new UnauthorizedException('Invalid email or password');
